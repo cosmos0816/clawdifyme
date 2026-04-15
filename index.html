@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clawdify Me! - get ur pixel badge from clawd</title>
+<meta name="description" content="clawd wants to take a photo with you and make you a cute lil pixel employee badge. it's free, it's fun, it's clawdified.">
+<meta name="keywords" content="clawdify, pixel badge, cute, meme, employee badge, pixel art">
+<meta property="og:title" content="Clawdify Me!">
+<meta property="og:description" content="let clawd make you a pixel employee badge. it's adorable. you're welcome.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="og-image.png">
+<meta name="twitter:title" content="Clawdify Me!">
+<meta name="twitter:description" content="clawd made me an employee badge and now i'm officially clawdified">
+<meta name="theme-color" content="#DB7859">
+<!-- Pixel Clawd favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='0' width='24' height='8' fill='%23DB7859'/><rect x='4' y='8' width='24' height='8' fill='%23DB7859'/><rect x='8' y='8' width='4' height='6' fill='black'/><rect x='20' y='8' width='4' height='6' fill='black'/><rect x='0' y='16' width='4' height='8' fill='%23DB7859'/><rect x='28' y='16' width='4' height='8' fill='%23DB7859'/><rect x='4' y='16' width='24' height='12' fill='%23DB7859'/><rect x='6' y='28' width='4' height='4' fill='%23DB7859'/><rect x='22' y='28' width='4' height='4' fill='%23DB7859'/></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --clawd: #DB7859;
+    --clawd-dark: #b8604a;
+    --clawd-light: #e8967a;
+    --bg: #1a1a2e;
+    --card: #f5f0e8;
+    --text: #2d2d2d;
+    --pixel: 4px;
+  }
+
+  body {
+    background: var(--bg);
+    color: #fff;
+    font-family: 'Silkscreen', 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    padding: 20px 16px;
+    overflow-x: hidden;
+    image-rendering: pixelated;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  /* Pages */
+  .page { display: none; flex-direction: column; align-items: center; gap: 24px; }
+  .page.active { display: flex; }
+
+  /* Pixel border mixin via box-shadow */
+  .pixel-border {
+    box-shadow:
+      var(--pixel) 0 0 0 var(--clawd),
+      calc(-1 * var(--pixel)) 0 0 0 var(--clawd),
+      0 var(--pixel) 0 0 var(--clawd),
+      0 calc(-1 * var(--pixel)) 0 0 var(--clawd);
+  }
+
+  /* Upload page */
+  .title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--clawd);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #888;
+    margin-top: -12px;
+    letter-spacing: 2px;
+  }
+
+  .badge-form {
+    width: 100%;
+    max-width: 320px;
+    display: grid;
+    gap: 12px;
+  }
+  .badge-field {
+    display: grid;
+    gap: 6px;
+    text-align: left;
+  }
+  .badge-label {
+    color: var(--clawd-light);
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .badge-input {
+    width: 100%;
+    border: none;
+    background: var(--card);
+    color: var(--text);
+    padding: 12px 14px;
+    font-family: 'Silkscreen', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    box-shadow:
+      4px 0 0 0 var(--clawd-dark),
+      -4px 0 0 0 var(--clawd-dark),
+      0 4px 0 0 var(--clawd-dark),
+      0 -4px 0 0 var(--clawd-dark);
+  }
+  .badge-input::placeholder {
+    color: #8f8176;
+    opacity: 1;
+  }
+  .badge-input:focus {
+    outline: none;
+    background: #fffaf4;
+  }
+
+  .upload-btn {
+    position: relative;
+    background: var(--clawd);
+    color: #fff;
+    border: none;
+    padding: 16px 40px;
+    font-family: 'Silkscreen', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: transform 0.1s, background 0.2s;
+    box-shadow:
+      4px 0 0 0 var(--clawd-dark),
+      -4px 0 0 0 var(--clawd-dark),
+      0 4px 0 0 var(--clawd-dark),
+      0 -4px 0 0 var(--clawd-dark),
+      4px 4px 0 0 var(--clawd-dark);
+  }
+  .upload-btn:hover { background: var(--clawd-light); transform: translateY(-2px); }
+  .upload-btn:active { transform: translateY(2px); box-shadow: 2px 2px 0 0 var(--clawd-dark); }
+  .upload-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  /* Character container */
+  .clawd-container {
+    position: relative;
+    width: 200px;
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .clawd-container svg {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Process page */
+  .status-text {
+    font-size: 14px;
+    color: var(--clawd);
+    min-height: 24px;
+    letter-spacing: 2px;
+  }
+
+  /* Pixel sparkle particles */
+  .sparkle {
+    position: absolute;
+    background: var(--clawd);
+    animation: sparkle-float 0.6s steps(6) forwards;
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+  @keyframes sparkle-float {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0) translateY(-40px); }
+  }
+
+  /* Pixel explosion particles for badge reveal */
+  .pixel-boom {
+    position: absolute;
+    pointer-events: none;
+    image-rendering: pixelated;
+    animation: pixel-explode 0.8s steps(8) forwards;
+  }
+  @keyframes pixel-explode {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+  }
+
+  /* Glow pulse behind badge on reveal */
+  .glow-pulse {
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(circle, rgba(219,120,89,0.4) 0%, transparent 70%);
+    animation: glow 0.6s ease-out forwards;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes glow {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.3; transform: scale(1); }
+  }
+
+  /* Animation classes */
+  .anim-bob { animation: bob 0.3s steps(2) infinite alternate; }
+  @keyframes bob { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+
+  .anim-shake { animation: shake 0.08s steps(2) infinite alternate; }
+  @keyframes shake { 0% { transform: translateX(-4px); } 100% { transform: translateX(4px); } }
+
+  .anim-walk { animation: walk 0.2s steps(2) infinite alternate; }
+  @keyframes walk { 0% { transform: translateX(-4px); } 100% { transform: translateX(4px); } }
+
+  .anim-bounce { animation: bounce 0.5s steps(4) 2; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
+  }
+
+  /* Result page - holding layout: Clawd at BOTTOM, badge ABOVE */
+  .result-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .holding-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .badge-wrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  .clawd-holding {
+    position: relative;
+    z-index: 2;
+    margin-top: -4px; /* overlap into badge bottom */
+  }
+  .clawd-holding svg {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    display: block;
+  }
+
+  .share-url {
+    margin-top: 14px;
+    padding: 8px 14px 6px;
+    background: rgba(18, 18, 40, 0.96);
+    color: var(--clawd-light);
+    font-size: 9px;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    box-shadow:
+      3px 0 0 0 var(--clawd-dark),
+      -3px 0 0 0 var(--clawd-dark),
+      0 3px 0 0 var(--clawd-dark),
+      0 -3px 0 0 var(--clawd-dark);
+  }
+
+  .badge-card {
+    width: 220px;
+    background: var(--card);
+    padding: 0;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    box-shadow:
+      4px 0 0 0 #d4cdc1,
+      -4px 0 0 0 #d4cdc1,
+      0 4px 0 0 #d4cdc1,
+      0 -4px 0 0 #d4cdc1;
+  }
+
+  /* Arms extend from Clawd below up along badge sides */
+  .grip-left, .grip-right {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    image-rendering: pixelated;
+    background: var(--clawd);
+  }
+  .grip-left {
+    bottom: -8px; left: -14px;
+    width: 14px; height: 48px;
+  }
+  .grip-right {
+    bottom: -8px; right: -14px;
+    width: 14px; height: 48px;
+  }
+
+  .badge-header {
+    background: var(--clawd);
+    color: #fff;
+    padding: 10px 10px 8px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    text-align: center;
+    font-family: 'Silkscreen', monospace;
+  }
+
+  .badge-photo-frame {
+    width: 120px;
+    height: 120px;
+    margin: 14px auto 10px;
+    border: 4px solid var(--clawd);
+    background: #ddd;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .badge-photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: auto;
+  }
+
+  .badge-info {
+    padding: 6px 16px 4px;
+    color: var(--text);
+    text-align: center;
+  }
+  .badge-name {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 2px;
+    word-break: break-word;
+    font-family: 'Silkscreen', monospace;
+  }
+  .badge-title {
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 6px;
+    font-family: 'Silkscreen', monospace;
+  }
+
+  .badge-barcode {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 20px 10px;
+  }
+  .badge-barcode span {
+    display: block;
+    height: 16px;
+    background: var(--text);
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .action-btn {
+    background: transparent;
+    color: var(--clawd);
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Silkscreen', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+    box-shadow:
+      3px 0 0 0 var(--clawd),
+      -3px 0 0 0 var(--clawd),
+      0 3px 0 0 var(--clawd),
+      0 -3px 0 0 var(--clawd);
+  }
+  .action-btn:hover {
+    background: var(--clawd);
+    color: #fff;
+  }
+  .action-btn:active { transform: translateY(2px); }
+  .action-btn.primary {
+    background: var(--clawd);
+    color: #fff;
+  }
+  .action-btn.primary:hover { background: var(--clawd-light); }
+
+  /* Fade transitions */
+  .fade-in { animation: fadeIn 0.3s steps(4); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Canvas for export (hidden) */
+  #export-canvas { display: none; }
+
+  .site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #8f93b4;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .creator-meta {
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+  }
+  .creator-credit {
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.22);
+  }
+  .creator-note {
+    color: #6d7399;
+    font-size: 8px;
+    max-width: 240px;
+    line-height: 1.5;
+  }
+  .linkedin-link {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a66c2;
+    color: #fff;
+    text-decoration: none;
+    box-shadow:
+      3px 0 0 0 #074b8c,
+      -3px 0 0 0 #074b8c,
+      0 3px 0 0 #074b8c,
+      0 -3px 0 0 #074b8c;
+    transition: transform 0.1s, background 0.1s;
+  }
+  .linkedin-link:hover {
+    background: #2b7fd4;
+    transform: translateY(-2px);
+  }
+  .linkedin-link:active {
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0 0 #074b8c;
+  }
+  .linkedin-icon {
+    width: 18px;
+    height: 18px;
+    display: block;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- UPLOAD PAGE -->
+  <section id="upload-page" class="page active">
+    <div class="title">Clawdify Me!</div>
+    <div class="subtitle">take a photo with clawd</div>
+    <div class="clawd-container" id="clawd-upload"></div>
+    <div class="badge-form">
+      <label class="badge-field" for="name-input">
+        <span class="badge-label">BADGE NAME</span>
+        <input class="badge-input" id="name-input" type="text" maxlength="20" value="CLAWD EMPLOYEE" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="badge-field" for="title-input">
+        <span class="badge-label">BADGE TITLE</span>
+        <input class="badge-input" id="title-input" type="text" maxlength="24" value="PIXEL DIVISION" autocomplete="off" spellcheck="false">
+      </label>
+    </div>
+    <button class="upload-btn">
+      UPLOAD PHOTO
+      <input type="file" id="photo-input" accept="image/*">
+    </button>
+  </section>
+
+  <!-- PROCESS PAGE -->
+  <section id="process-page" class="page">
+    <div class="clawd-container" id="clawd-process"></div>
+    <div class="status-text" id="status-text"></div>
+  </section>
+
+  <!-- RESULT PAGE -->
+  <section id="result-page" class="page">
+    <div class="result-area" id="result-area">
+      <div class="holding-wrapper" id="holding-wrapper">
+        <!-- Badge on top, Clawd below holding it up -->
+        <div class="badge-wrap" id="badge-wrap">
+          <div class="grip-left"></div>
+          <div class="grip-right"></div>
+          <div class="badge-card" id="badge-card">
+            <div class="badge-header">CLAWDIFIED</div>
+            <div class="badge-photo-frame" id="badge-photo"></div>
+            <div class="badge-info">
+              <div class="badge-name" id="badge-name">CLAWD EMPLOYEE</div>
+              <div class="badge-title" id="badge-dept">Pixel Division</div>
+            </div>
+            <div class="badge-barcode" id="badge-barcode"></div>
+          </div>
+        </div>
+        <div class="clawd-holding" id="clawd-result"></div>
+        <div class="share-url" id="share-url">CLAWDIFYME.COM</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="action-btn primary" id="btn-download">DOWNLOAD</button>
+      <button class="action-btn" id="btn-share">SHARE</button>
+      <button class="action-btn" id="btn-again">AGAIN!</button>
+    </div>
+  </section>
+</div>
+
+<footer class="site-footer">
+  <div class="creator-meta">
+    <span class="creator-credit">CREATED BY JAY LIM</span>
+    <span class="creator-note">GOT THE IDEA FROM OUR CUTE LITTLE ONE FROM CLAUDE</span>
+  </div>
+  <a
+    class="linkedin-link"
+    href="https://www.linkedin.com/in/jay-lim-8992571b0/"
+    target="_blank"
+    rel="noreferrer"
+    aria-label="JAY LIM LINKEDIN"
+  >
+    <svg class="linkedin-icon" viewBox="0 0 18 18" aria-hidden="true" shape-rendering="crispEdges">
+      <rect width="18" height="18" fill="#0a66c2"></rect>
+      <rect x="2" y="2" width="3" height="3" fill="#ffffff"></rect>
+      <rect x="2" y="6" width="3" height="10" fill="#ffffff"></rect>
+      <rect x="7" y="6" width="3" height="10" fill="#ffffff"></rect>
+      <rect x="10" y="6" width="3" height="3" fill="#ffffff"></rect>
+      <rect x="13" y="6" width="3" height="10" fill="#ffffff"></rect>
+      <rect x="10" y="9" width="3" height="7" fill="#ffffff"></rect>
+    </svg>
+  </a>
+</footer>
+
+<canvas id="export-canvas"></canvas>
+
+<script>
+// ─── Character SVG Builder ───────────────────────────────────────────
+const S = 8;
+const CLAWD = '#DB7859';
+const CLAWD_DARK = '#b8604a';
+const EYE = '#000';
+const EXPORT_SCALE = 3;
+const BADGE_BORDER = '#d4cdc1';
+const var_bg = '#1a1a2e';
+const BADGE_PRESETS = [
+  { name: 'PIXEL WRANGLER', title: 'CLAWD OPERATIONS' },
+  { name: 'SPRITE INTERN', title: 'PIXEL DIVISION' },
+  { name: 'DESK GREMLIN', title: 'CLAWD HQ' },
+  { name: 'RETRO ANALYST', title: 'BADGE FACTORY' },
+  { name: 'BEEP BOOP LEAD', title: 'SPRITE SUPPORT' },
+  { name: 'TINY TASK HERO', title: 'CLAWD ADMIN' },
+  { name: 'UI PIXEL POLISHER', title: 'PIXEL PAPERWORK' },
+  { name: 'LOFI MANAGER', title: 'CLAWD SYSTEMS' },
+  { name: 'LEVEL ONE BOSS', title: 'BADGE DIVISION' },
+  { name: 'MOUSE CLICKER', title: 'RETRO OPS' },
+  { name: 'PNG COORDINATOR', title: 'CLAWD LAB' },
+  { name: 'CRISP EDGE CHIEF', title: 'SPRITE OFFICE' },
+  { name: 'BADGE BUILDER', title: 'PIXEL MAILROOM' },
+  { name: 'OFFICE NPC', title: 'CLAWD SERVICES' },
+  { name: 'PIXEL JANITOR', title: 'RETRO FACILITIES' },
+  { name: 'SPRITE ACCOUNTANT', title: 'SPREADSHEET REALM' },
+  { name: 'BUG SMOOTHER', title: 'BUG BUFFET' },
+  { name: 'LUNCH QUESTER', title: 'SNACK OPS' },
+  { name: 'CLAWD HANDLER', title: 'CLAWD LOGISTICS' },
+  { name: 'RETRO PLANNER', title: 'LEVEL SELECT' },
+  { name: 'FORM FILLER', title: 'FORM CASTLE' },
+  { name: 'TASK BARISTA', title: 'PIXEL CAFE' },
+  { name: 'MEETING SPEEDRUNNER', title: 'MEETING DUNGEON' },
+  { name: 'PAPER PIXELER', title: 'PAPERWORK PIT' },
+  { name: 'CRT OVERSEER', title: 'CRT COMMAND' }
+];
+const CEO_BADGE_PRESET = { name: 'CEO', title: 'CLAWD EXEC SUITE' };
+const CEO_PRESET_CHANCE = 0.0025;
+let badgeDefaults = BADGE_PRESETS[0];
+
+function pickRandomBadgePreset() {
+  if (Math.random() < CEO_PRESET_CHANCE) return CEO_BADGE_PRESET;
+  return BADGE_PRESETS[Math.floor(Math.random() * BADGE_PRESETS.length)];
+}
+
+function rect(x, y, w, h, fill) {
+  const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  r.setAttribute('x', x * S);
+  r.setAttribute('y', y * S);
+  r.setAttribute('width', w * S);
+  r.setAttribute('height', h * S);
+  r.setAttribute('fill', fill);
+  return r;
+}
+
+function buildClawd(pose) {
+  // poses: 'idle', 'handsup', 'holding'
+  const isUp = pose === 'handsup';
+  const isHold = pose === 'holding';
+
+  // Holding pose: no side arms, body only - arms are rendered as HTML
+  const vw = 25;
+  const vh = (isUp || isHold) ? 18 : 15;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${vw * S} ${vh * S}`);
+  svg.setAttribute('width', vw * S);
+  svg.setAttribute('height', vh * S);
+  svg.setAttribute('shape-rendering', 'crispEdges');
+  svg.style.imageRendering = 'pixelated';
+
+  if (isHold) {
+    // Holding pose: arms raised up (into badge above), no side arms
+    // Arms reaching up above head
+    svg.appendChild(rect(0, 0, 3, 3, CLAWD));   // left arm up
+    svg.appendChild(rect(22, 0, 3, 3, CLAWD));  // right arm up
+    // head
+    svg.appendChild(rect(3, 3, 19, 3, CLAWD));
+    // face - full width background
+    svg.appendChild(rect(3, 6, 19, 3, CLAWD));
+    // eyes
+    const eyeL = rect(6, 6, 1.5, 3, EYE); eyeL.id = 'eye-l';
+    const eyeR = rect(17.5, 6, 1.5, 3, EYE); eyeR.id = 'eye-r';
+    svg.appendChild(eyeL);
+    svg.appendChild(eyeR);
+    // body
+    svg.appendChild(rect(3, 9, 19, 6, CLAWD));
+    // legs
+    const legL1 = rect(4.5, 15, 1.5, 3, CLAWD); legL1.id = 'leg-l1';
+    const legL2 = rect(7.5, 15, 1.5, 3, CLAWD); legL2.id = 'leg-l2';
+    const legR1 = rect(16, 15, 1.5, 3, CLAWD);  legR1.id = 'leg-r1';
+    const legR2 = rect(19, 15, 1.5, 3, CLAWD);  legR2.id = 'leg-r2';
+    svg.appendChild(legL1);
+    svg.appendChild(legL2);
+    svg.appendChild(legR1);
+    svg.appendChild(legR2);
+    return svg;
+  }
+
+  const yOff = isUp ? 3 : 0;
+
+  // head top
+  svg.appendChild(rect(3, yOff, 19, 3, CLAWD));
+
+  // Full-width face background (prevents anti-aliasing seams between rects)
+  svg.appendChild(rect(3, yOff + 3, 19, 3, CLAWD));
+
+  if (isUp) {
+    // Wider ears for arms-up pose
+    svg.appendChild(rect(3, yOff + 3, 3, 3, CLAWD));
+    svg.appendChild(rect(19, yOff + 3, 3, 3, CLAWD));
+  }
+
+  // eyes
+  const eyeL = rect(6, yOff + 3, 1.5, 3, EYE); eyeL.id = 'eye-l';
+  const eyeR = rect(17.5, yOff + 3, 1.5, 3, EYE); eyeR.id = 'eye-r';
+  svg.appendChild(eyeL);
+  svg.appendChild(eyeR);
+
+  // Body + arms
+  svg.appendChild(rect(3, yOff + 6, 19, 6, CLAWD));
+  if (isUp) {
+    svg.appendChild(rect(0, 0, 3, 3, CLAWD));
+    svg.appendChild(rect(22, 0, 3, 3, CLAWD));
+  } else {
+    svg.appendChild(rect(0, yOff + 6, 3, 3, CLAWD));
+    svg.appendChild(rect(22, yOff + 6, 3, 3, CLAWD));
+  }
+
+  // legs
+  const legY = isUp ? 15 : 12;
+  const legL1 = rect(4.5, legY, 1.5, 3, CLAWD); legL1.id = 'leg-l1';
+  const legL2 = rect(7.5, legY, 1.5, 3, CLAWD); legL2.id = 'leg-l2';
+  const legR1 = rect(16, legY, 1.5, 3, CLAWD);  legR1.id = 'leg-r1';
+  const legR2 = rect(19, legY, 1.5, 3, CLAWD);  legR2.id = 'leg-r2';
+  svg.appendChild(legL1);
+  svg.appendChild(legL2);
+  svg.appendChild(legR1);
+  svg.appendChild(legR2);
+
+  return svg;
+}
+
+
+// ─── Blink Animation ────────────────────────────────────────────────
+let blinkTimer = null;
+const BLINK_FRAMES = [3, 1.5, 0.5, 1.5, 3];
+
+function startBlink(svg) {
+  stopBlink();
+  blinkTimer = setInterval(() => {
+    const el = svg.querySelector('#eye-l');
+    if (!el) return;
+    let i = 0;
+    const step = () => {
+      if (i >= BLINK_FRAMES.length) return;
+      const h = BLINK_FRAMES[i];
+      if (i === 0) {
+        el.setAttribute('data-base-y', el.getAttribute('y'));
+        svg.querySelector('#eye-r')?.setAttribute('data-base-y', svg.querySelector('#eye-r').getAttribute('y'));
+      }
+      setEyeHeight(svg, h, parseFloat(el.getAttribute('data-base-y')) / S + (3 - h));
+      i++;
+      if (i < BLINK_FRAMES.length) setTimeout(step, 60);
+    };
+    step();
+  }, 2800 + Math.random() * 1500);
+}
+
+function stopBlink() {
+  if (blinkTimer) { clearInterval(blinkTimer); blinkTimer = null; }
+}
+
+function setEyeHeight(svg, h, yUnit) {
+  ['eye-l', 'eye-r'].forEach(id => {
+    const e = svg.querySelector('#' + id);
+    if (!e) return;
+    e.setAttribute('height', h * S);
+    if (yUnit !== undefined) e.setAttribute('y', yUnit * S);
+  });
+}
+
+
+// ─── Pixel Particles ────────────────────────────────────────────────
+function spawnSparkles(container) {
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = (Math.random() * 160 + 20) + 'px';
+    s.style.top = (Math.random() * 100 + 30) + 'px';
+    const size = (Math.floor(Math.random() * 3) + 1) * 4; // 4, 8, or 12px - pixel grid
+    s.style.width = s.style.height = size + 'px';
+    s.style.animationDelay = (Math.random() * 0.3) + 's';
+    s.style.background = ['#DB7859','#FFD700','#FF6B6B','#4ECDC4','#fff'][Math.floor(Math.random()*5)];
+    container.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+  }
+}
+
+// Pixel explosion burst - like Minecraft item pop
+function pixelExplosion(container) {
+  const cx = container.offsetWidth / 2;
+  const cy = container.offsetHeight / 2;
+  const colors = ['#DB7859','#FFD700','#FF6B6B','#4ECDC4','#fff','#b8604a','#e8967a'];
+
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'pixel-boom';
+    const size = (Math.floor(Math.random() * 3) + 1) * 4;
+    p.style.width = p.style.height = size + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+
+    // Radial burst directions
+    const angle = (Math.PI * 2 / 24) * i + (Math.random() * 0.3);
+    const dist = 60 + Math.random() * 80;
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    p.style.animationDelay = (Math.random() * 0.1) + 's';
+
+    container.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+
+// ─── Page Navigation ────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById(id);
+  page.classList.add('active');
+  page.classList.add('fade-in');
+  page.addEventListener('animationend', () => page.classList.remove('fade-in'), { once: true });
+}
+
+
+// ─── Photo Processing ───────────────────────────────────────────────
+let photoDataURL = null;
+
+function normalizeBadgeText(value, fallback, maxLength) {
+  const normalized = value
+    .toUpperCase()
+    .replace(/[^A-Z0-9 .!?\-_/&]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+  return normalized || fallback;
+}
+
+function syncBadgeText(normalizeInputs = false) {
+  const nameInput = document.getElementById('name-input');
+  const titleInput = document.getElementById('title-input');
+  const fallbackName = badgeDefaults?.name || BADGE_PRESETS[0].name;
+  const fallbackTitle = badgeDefaults?.title || BADGE_PRESETS[0].title;
+  const name = normalizeBadgeText(nameInput?.value || '', fallbackName, 20);
+  const title = normalizeBadgeText(titleInput?.value || '', fallbackTitle, 24);
+
+  document.getElementById('badge-name').textContent = name;
+  document.getElementById('badge-dept').textContent = title;
+
+  if (normalizeInputs) {
+    if (nameInput) nameInput.value = name;
+    if (titleInput) titleInput.value = title;
+  }
+
+  return { name, title };
+}
+
+function processPhoto(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = Math.min(img.width, img.height);
+        canvas.width = 400;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        const sx = (img.width - size) / 2;
+        const sy = (img.height - size) / 2;
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 400, 400);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
+// ─── Animation Sequence ─────────────────────────────────────────────
+async function runProcessAnimation() {
+  const container = document.getElementById('clawd-process');
+  const statusEl = document.getElementById('status-text');
+
+  container.innerHTML = '';
+  const svg = buildClawd('idle');
+  svg.style.width = '200px';
+  svg.style.height = 'auto';
+  container.appendChild(svg);
+
+  showPage('process-page');
+
+  // 1. Working
+  container.classList.add('anim-bob');
+  statusEl.textContent = 'PROCESSING...';
+  await wait(600);
+
+  // 2. Changing
+  container.classList.remove('anim-bob');
+  container.classList.add('anim-shake');
+  statusEl.textContent = 'CLAWDIFYING...';
+  spawnSparkles(container);
+  await wait(300);
+  spawnSparkles(container);
+  await wait(300);
+
+  // 3. Bringing
+  container.classList.remove('anim-shake');
+  container.classList.add('anim-walk');
+  statusEl.textContent = 'ALMOST THERE...';
+  let legToggle = false;
+  const legInterval = setInterval(() => {
+    const l1 = svg.querySelector('#leg-l1');
+    const l2 = svg.querySelector('#leg-l2');
+    const r1 = svg.querySelector('#leg-r1');
+    const r2 = svg.querySelector('#leg-r2');
+    if (l1) l1.setAttribute('height', legToggle ? S * 2 : S * 3);
+    if (l2) l2.setAttribute('height', legToggle ? S * 3 : S * 2);
+    if (r1) r1.setAttribute('height', legToggle ? S * 3 : S * 2);
+    if (r2) r2.setAttribute('height', legToggle ? S * 2 : S * 3);
+    legToggle = !legToggle;
+  }, 100);
+  await wait(600);
+  clearInterval(legInterval);
+
+  // 4. Hands up + explosion
+  container.classList.remove('anim-walk');
+  statusEl.textContent = 'TA-DA!';
+
+  container.innerHTML = '';
+  const upSvg = buildClawd('handsup');
+  upSvg.style.width = '200px';
+  upSvg.style.height = 'auto';
+  container.appendChild(upSvg);
+  container.classList.add('anim-bounce');
+  pixelExplosion(container);
+  spawnSparkles(container);
+
+  await wait(700);
+  container.classList.remove('anim-bounce');
+
+  showResultPage();
+}
+
+function wait(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+
+// ─── Result Page ────────────────────────────────────────────────────
+function showResultPage() {
+  syncBadgeText(true);
+
+  // Build holding character (arms up, below badge)
+  const resultContainer = document.getElementById('clawd-result');
+  resultContainer.innerHTML = '';
+  const svg = buildClawd('holding');
+  svg.style.width = '200px';
+  svg.style.height = 'auto';
+  resultContainer.appendChild(svg);
+
+  // Set photo
+  const photoFrame = document.getElementById('badge-photo');
+  photoFrame.innerHTML = '';
+  if (photoDataURL) {
+    const img = document.createElement('img');
+    img.src = photoDataURL;
+    photoFrame.appendChild(img);
+  }
+
+  // Clean up any previous glow
+  const badgeWrap = document.getElementById('badge-wrap');
+  badgeWrap.querySelectorAll('.glow-pulse').forEach(g => g.remove());
+
+  generateBarcode();
+  showPage('result-page');
+
+  // Pixel explosion on the holding wrapper
+  const wrapper = document.getElementById('holding-wrapper');
+  pixelExplosion(wrapper);
+
+  // Add glow behind badge
+  const glow = document.createElement('div');
+  glow.className = 'glow-pulse';
+  badgeWrap.appendChild(glow);
+  glow.addEventListener('animationend', () => {
+    glow.style.opacity = '0.2';
+  });
+
+  // Start blinking on result character
+  startBlink(svg);
+}
+
+function generateBarcode() {
+  const bc = document.getElementById('badge-barcode');
+  bc.innerHTML = '';
+  const widths = [3,1,2,1,3,2,1,1,3,1,2,3,1,1,2,1,3,2,1];
+  widths.forEach(w => {
+    const s = document.createElement('span');
+    s.style.width = (w * 2) + 'px';
+    bc.appendChild(s);
+  });
+}
+
+
+// ─── Export ──────────────────────────────────────────────────────────
+function parsePx(value) {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getRelativeBox(element, baseRect, offsetX, offsetY) {
+  const rect = element.getBoundingClientRect();
+  return {
+    x: Math.round(rect.left - baseRect.left + offsetX),
+    y: Math.round(rect.top - baseRect.top + offsetY),
+    width: Math.round(rect.width),
+    height: Math.round(rect.height)
+  };
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function svgToImage(svg) {
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const markup = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([markup], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  try {
+    return await loadImage(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function drawCenteredText(ctx, text, box, style) {
+  const fontWeight = style.fontWeight || '400';
+  const fontSize = style.fontSize || '12px';
+  const fontFamily = style.fontFamily || '"Silkscreen", monospace';
+  const letterSpacing = parsePx(style.letterSpacing);
+  const y = box.y + (box.height / 2);
+
+  ctx.save();
+  ctx.fillStyle = style.color || '#fff';
+  ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;
+  ctx.textBaseline = 'middle';
+
+  if (letterSpacing > 0) {
+    const letters = Array.from(text);
+    const widths = letters.map(letter => ctx.measureText(letter).width);
+    const totalWidth = widths.reduce((sum, width) => sum + width, 0) + (letterSpacing * Math.max(letters.length - 1, 0));
+    let x = box.x + ((box.width - totalWidth) / 2);
+    letters.forEach((letter, index) => {
+      ctx.fillText(letter, x, y);
+      x += widths[index] + letterSpacing;
+    });
+  } else {
+    ctx.textAlign = 'center';
+    ctx.fillText(text, box.x + (box.width / 2), y);
+  }
+
+  ctx.restore();
+}
+
+function drawScanlines(ctx, width, height) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.03)';
+  for (let y = 2; y < height; y += 4) {
+    ctx.fillRect(0, y, width, 2);
+  }
+  ctx.restore();
+}
+
+async function renderExportCanvas() {
+  syncBadgeText(true);
+  if (document.fonts?.ready) await document.fonts.ready;
+
+  const canvas = document.getElementById('export-canvas');
+  const ctx = canvas.getContext('2d');
+  const wrapper = document.getElementById('holding-wrapper');
+  const badgeWrap = document.getElementById('badge-wrap');
+  const badgeCard = document.getElementById('badge-card');
+  const badgeHeader = badgeCard.querySelector('.badge-header');
+  const photoFrame = document.getElementById('badge-photo');
+  const badgeName = document.getElementById('badge-name');
+  const badgeDept = document.getElementById('badge-dept');
+  const barcode = document.getElementById('badge-barcode');
+  const clawdSvg = document.querySelector('#clawd-result svg');
+  const shareUrl = document.getElementById('share-url');
+  const glow = badgeWrap.querySelector('.glow-pulse');
+  const borderSize = parsePx(getComputedStyle(document.documentElement).getPropertyValue('--pixel')) || 4;
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const paddingX = 28;
+  const paddingTop = 28;
+  const paddingBottom = 24;
+  const exportWidth = Math.ceil(wrapperRect.width + (paddingX * 2));
+  const exportHeight = Math.ceil(wrapperRect.height + paddingTop + paddingBottom);
+  const offsetX = Math.round((exportWidth - wrapperRect.width) / 2);
+  const offsetY = paddingTop;
+
+  canvas.width = exportWidth * EXPORT_SCALE;
+  canvas.height = exportHeight * EXPORT_SCALE;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(EXPORT_SCALE, 0, 0, EXPORT_SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.fillStyle = getComputedStyle(document.body).backgroundColor || var_bg;
+  ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+  if (glow) {
+    const glowBox = getRelativeBox(glow, wrapperRect, offsetX, offsetY);
+    const glowGradient = ctx.createRadialGradient(
+      glowBox.x + (glowBox.width / 2),
+      glowBox.y + (glowBox.height / 2),
+      0,
+      glowBox.x + (glowBox.width / 2),
+      glowBox.y + (glowBox.height / 2),
+      Math.max(glowBox.width, glowBox.height) / 2
+    );
+    glowGradient.addColorStop(0, 'rgba(219,120,89,0.22)');
+    glowGradient.addColorStop(1, 'rgba(219,120,89,0)');
+    ctx.fillStyle = glowGradient;
+    ctx.fillRect(glowBox.x, glowBox.y, glowBox.width, glowBox.height);
+  }
+
+  const cardBox = getRelativeBox(badgeCard, wrapperRect, offsetX, offsetY);
+  const headerBox = getRelativeBox(badgeHeader, wrapperRect, offsetX, offsetY);
+  const photoBox = getRelativeBox(photoFrame, wrapperRect, offsetX, offsetY);
+  const nameBox = getRelativeBox(badgeName, wrapperRect, offsetX, offsetY);
+  const deptBox = getRelativeBox(badgeDept, wrapperRect, offsetX, offsetY);
+
+  ctx.fillStyle = BADGE_BORDER;
+  ctx.fillRect(cardBox.x - borderSize, cardBox.y, borderSize, cardBox.height);
+  ctx.fillRect(cardBox.x + cardBox.width, cardBox.y, borderSize, cardBox.height);
+  ctx.fillRect(cardBox.x, cardBox.y - borderSize, cardBox.width, borderSize);
+  ctx.fillRect(cardBox.x, cardBox.y + cardBox.height, cardBox.width, borderSize);
+
+  const cardStyle = getComputedStyle(badgeCard);
+  ctx.fillStyle = cardStyle.backgroundColor;
+  ctx.fillRect(cardBox.x, cardBox.y, cardBox.width, cardBox.height);
+
+  Array.from(badgeWrap.querySelectorAll('.grip-left, .grip-right')).forEach(grip => {
+    const gripBox = getRelativeBox(grip, wrapperRect, offsetX, offsetY);
+    ctx.fillStyle = getComputedStyle(grip).backgroundColor || CLAWD;
+    ctx.fillRect(gripBox.x, gripBox.y, gripBox.width, gripBox.height);
+  });
+
+  const headerStyle = getComputedStyle(badgeHeader);
+  ctx.fillStyle = headerStyle.backgroundColor;
+  ctx.fillRect(headerBox.x, headerBox.y, headerBox.width, headerBox.height);
+  drawCenteredText(ctx, badgeHeader.textContent.trim(), headerBox, headerStyle);
+
+  const photoStyle = getComputedStyle(photoFrame);
+  const photoBorder = parsePx(photoStyle.borderTopWidth);
+  ctx.fillStyle = photoStyle.borderTopColor || CLAWD;
+  ctx.fillRect(photoBox.x, photoBox.y, photoBox.width, photoBox.height);
+  ctx.fillStyle = photoStyle.backgroundColor;
+  ctx.fillRect(photoBox.x + photoBorder, photoBox.y + photoBorder, photoBox.width - (photoBorder * 2), photoBox.height - (photoBorder * 2));
+
+  const photoImg = photoFrame.querySelector('img');
+  if (photoImg?.src) {
+    const loadedPhoto = photoImg.complete ? photoImg : await loadImage(photoImg.src);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(
+      loadedPhoto,
+      photoBox.x + photoBorder,
+      photoBox.y + photoBorder,
+      photoBox.width - (photoBorder * 2),
+      photoBox.height - (photoBorder * 2)
+    );
+    ctx.restore();
+  }
+
+  drawCenteredText(ctx, badgeName.textContent.trim(), nameBox, getComputedStyle(badgeName));
+  drawCenteredText(ctx, badgeDept.textContent.trim(), deptBox, getComputedStyle(badgeDept));
+
+  Array.from(barcode.children).forEach(bar => {
+    const barBox = getRelativeBox(bar, wrapperRect, offsetX, offsetY);
+    ctx.fillStyle = getComputedStyle(bar).backgroundColor || '#2d2d2d';
+    ctx.fillRect(barBox.x, barBox.y, barBox.width, barBox.height);
+  });
+
+  if (clawdSvg) {
+    const clawdBox = getRelativeBox(clawdSvg, wrapperRect, offsetX, offsetY);
+    const clawdImage = await svgToImage(clawdSvg);
+    ctx.drawImage(clawdImage, clawdBox.x, clawdBox.y, clawdBox.width, clawdBox.height);
+  }
+
+  if (shareUrl) {
+    const shareBox = getRelativeBox(shareUrl, wrapperRect, offsetX, offsetY);
+    const shareStyle = getComputedStyle(shareUrl);
+    const shareBorder = 3;
+    ctx.fillStyle = CLAWD_DARK;
+    ctx.fillRect(shareBox.x - shareBorder, shareBox.y, shareBorder, shareBox.height);
+    ctx.fillRect(shareBox.x + shareBox.width, shareBox.y, shareBorder, shareBox.height);
+    ctx.fillRect(shareBox.x, shareBox.y - shareBorder, shareBox.width, shareBorder);
+    ctx.fillRect(shareBox.x, shareBox.y + shareBox.height, shareBox.width, shareBorder);
+    ctx.fillStyle = shareStyle.backgroundColor;
+    ctx.fillRect(shareBox.x, shareBox.y, shareBox.width, shareBox.height);
+    drawCenteredText(ctx, shareUrl.textContent.trim(), shareBox, shareStyle);
+  }
+
+  drawScanlines(ctx, exportWidth, exportHeight);
+  return canvas;
+}
+
+async function downloadBadge() {
+  const canvas = await renderExportCanvas();
+  const link = document.createElement('a');
+  link.download = 'clawdify-badge.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function shareBadge() {
+  if (navigator.share) {
+    try {
+      const canvas = await renderExportCanvas();
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('PNG export failed');
+      const file = new File([blob], 'clawdify-badge.png', { type: 'image/png' });
+      await navigator.share({ title: 'Clawdify Me!', text: 'I got clawdified!', files: [file] });
+    } catch (e) {
+      downloadBadge();
+    }
+  } else {
+    downloadBadge();
+  }
+}
+
+
+// ─── Init ───────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const uploadContainer = document.getElementById('clawd-upload');
+  const idleSvg = buildClawd('idle');
+  idleSvg.style.width = '200px';
+  idleSvg.style.height = 'auto';
+  uploadContainer.appendChild(idleSvg);
+  startBlink(idleSvg);
+  badgeDefaults = pickRandomBadgePreset();
+  document.getElementById('name-input').value = badgeDefaults.name;
+  document.getElementById('title-input').value = badgeDefaults.title;
+  syncBadgeText(true);
+
+  ['name-input', 'title-input'].forEach(id => {
+    const input = document.getElementById(id);
+    input.addEventListener('input', () => syncBadgeText());
+    input.addEventListener('blur', () => syncBadgeText(true));
+  });
+
+  document.getElementById('photo-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    stopBlink();
+    syncBadgeText(true);
+    photoDataURL = await processPhoto(file);
+    runProcessAnimation();
+  });
+
+  document.getElementById('btn-download').addEventListener('click', downloadBadge);
+  document.getElementById('btn-share').addEventListener('click', shareBadge);
+  document.getElementById('btn-again').addEventListener('click', () => {
+    stopBlink();
+    photoDataURL = null;
+    document.getElementById('photo-input').value = '';
+    showPage('upload-page');
+    const svg = document.querySelector('#clawd-upload svg');
+    if (svg) startBlink(svg);
+  });
+});
+</script>
+
+</body>
+</html>
